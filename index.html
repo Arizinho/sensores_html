@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset='UTF-8'>
+  <title>Controle do LED</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; padding: 10px; margin: 0; background: #f9f9f9; }
+    .botao { font-size: 20px; padding: 10px 30px; margin: 10px; border: none; border-radius: 8px; }
+    .on { background: #4CAF50; color: white; }
+    .off { background: #f44336; color: white; }
+    .barra { width: 30%; background: #ddd; border-radius: 6px; overflow: hidden; margin: 0 auto 15px auto; height: 20px; }
+    .preenchimento { height: 100%; transition: width 0.3s ease; }
+    #barra_x { background: #2196F3; }
+    #barra_y { background: rgb(177, 96, 153); }
+    .label { font-weight: bold; margin-bottom: 5px; display: block; }
+    .bolinha { width: 20px; height: 20px; border-radius: 50%; display: inline-block; margin-left: 10px; background: #ccc; transition: background 0.3s ease; }
+    @media (max-width: 600px) {
+      .botao { width: 80%; font-size: 18px; }
+    }
+  </style>
+  <script>
+    function sendCommand(cmd) {
+      fetch('/led/' + cmd);
+    }
+    function atualizar() {
+      fetch('/estado')
+        .then(res => res.json())
+        .then(data => {
+          document.getElementById('estado').innerText = data.led ? 'Ligado' : 'Desligado';
+          document.getElementById('x_valor').innerText = data.x;
+          document.getElementById('y_valor').innerText = data.y;
+          document.getElementById('botao').innerText = data.botao ? 'Pressionado' : 'Solto';
+          document.getElementById('joy').innerText = data.joy ? 'Pressionado' : 'Solto';
+          document.getElementById('bolinha_a').style.background = data.botao ? '#2126F3' : '#ccc';
+          document.getElementById('bolinha_joy').style.background = data.joy ? '#4C7F50' : '#ccc';
+          document.getElementById('barra_x').style.width = Math.round(data.x / 4095 * 100) + '%';
+          document.getElementById('barra_y').style.width = Math.round(data.y / 4095 * 100) + '%';
+        });
+    }
+    setInterval(atualizar, 1000);
+  </script>
+</head>
+<body>
+
+  <h1>Controle do LED</h1>
+
+  <p>Estado do LED: <span id='estado'>--</span></p>
+
+  <p class='label'>Joystick X: <span id='x_valor'>--</span></p>
+  <div class='barra'><div id='barra_x' class='preenchimento'></div></div>
+
+  <p class='label'>Joystick Y: <span id='y_valor'>--</span></p>
+  <div class='barra'><div id='barra_y' class='preenchimento'></div></div>
+
+  <p class='label'>Botão A: <span id='botao'>--</span> <span id='bolinha_a' class='bolinha'></span></p>
+  <p class='label'>Botão do Joystick: <span id='joy'>--</span> <span id='bolinha_joy' class='bolinha'></span></p>
+
+  <button class='botao on' onclick="sendCommand('on')">Ligar</button>
+  <button class='botao off' onclick="sendCommand('off')">Desligar</button>
+
+  <hr style='margin-top: 20px;'>
+  <p style='font-size: 15px; color: #336699; font-style: italic; max-width: 90%; margin: 10px auto;'>
+    Utilização da BitDogLab para exemplificar a comunicação via rede Wi-Fi utilizando o protocolo HTML com JavaScript
+  </p>
+
+</body>
+</html>
