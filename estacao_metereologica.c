@@ -401,7 +401,6 @@ int main()
     char str_umi[5];
     char str_press[5];  
     bool cor = true;
-    bool wifi_connected = false;
     uint8_t contador = 25;
 
     while (true)
@@ -445,9 +444,6 @@ int main()
 
             // Leitura do AHT20
             aht20_read(I2C_PORT, &data);
-
-            // Verifica conexão Wi-Fi
-            wifi_connected = cyw43_tcpip_link_status(&cyw43_state, CYW43_ITF_STA) == CYW43_LINK_UP;
 
             // Converte valores para string
             sprintf(str_press, "%.0fkPa", pressure / 1000.0);      
