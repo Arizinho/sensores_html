@@ -456,7 +456,7 @@ int main()
             sprintf(str_umi, "%.1f%%", data.humidity);
         
             if (!mode) {
-                // Atualiza display com dados
+                // Modo 0: Atualiza display com dados
                 ssd1306_fill(&ssd, !cor);                           
                 ssd1306_rect(&ssd, 3, 3, 122, 60, cor, !cor);       
                 ssd1306_line(&ssd, 3, 14, 123, 14, cor);                              
@@ -473,7 +473,7 @@ int main()
                 ssd1306_draw_string(&ssd, str_umi, 73, 52);            
                 ssd1306_send_data(&ssd); 
             } else {
-                // Modo 1: mostra IP
+                // Modo 1: Mostra IP
                 ssd1306_fill(&ssd, false);
                 ssd1306_rect(&ssd, 3, 3, 122, 60, cor, !cor);
                 ssd1306_line(&ssd, 3, 14, 123, 14, cor); 
