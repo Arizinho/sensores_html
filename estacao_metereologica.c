@@ -36,8 +36,8 @@
 #define BOTAO_A 5 //GPIO botão A
 
 //Definições do Wi-Fi
-#define WIFI_SSID "WIFI_NAME"
-#define WIFI_PASS "WIFI_PASSWORD"
+#define WIFI_SSID "WIFI NAME"
+#define WIFI_PASS "WIFI PASSWORD"
 
 //Variáveis globais
 AHT20_Data data; //Estrutura para armazenar os dados do AHT20
@@ -63,10 +63,14 @@ void desenho_pio(bool modo, PIO pio, uint sm);
 //HTML para o servidor web
 const char HTML_BODY[] =
 "<!DOCTYPE html>"
-"<html><head><meta charset='UTF-8'><title>Estação Meteorológica</title>"
+"<html><head><meta charset='UTF-8'><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><title>Estação Meteorológica</title>"
 "<style>\n"
 "body { font-family: sans-serif; text-align: center; padding: 10px; margin: 0; background: #f9f9f9; }\n"
-" .graficos { width: 600px; height: 300px; margin: 20px auto; }\n"
+".graficos { width: 600px; height: 300px; margin: 20px auto; }\n"
+".tabela {margin: 0 auto; border: 2px solid #333; border-collapse: collapse;}\n"
+".tabela input { width: 100%; box-sizing: border-box; font-size: 12px;}"
+".celula {border-right: 1px solid #333; padding: 6px;}\n"
+"@media (max-width: 600px) { .graficos { width: 90%; height: 200px; } .tabela {width: 100%; font-size: 14px; table-layout: fixed; word-wrap: break-word;} }\n"
 "</style>\n"
 "<script src=\"https://cdn.jsdelivr.net/npm/chart.js\"></script>\n"
 "</head>\n"
@@ -77,11 +81,11 @@ const char HTML_BODY[] =
 "<p>Umidade: <span id='umidade'>--</span></p>\n"
 "<canvas id=\"grafico\" class=\"graficos\"></canvas>\n"
 "<br><h3>Configuração de Limites</h3>\n"
-"<table style='margin: 0 auto; border: 2px solid #333; border-collapse: collapse;'>"
+"<table class=\"tabela\">"
 "<tr>"
-"<td style='border-right: 1px solid #333; padding: 6px;'>Temperatura Mínima (valor atual: <span id='actualtempMin'>--</span>): <input type='number' id='tempMin' value='0'></td>\n"
+"<td class=\"celula\">Temperatura Mínima (valor atual: <span id='actualtempMin'>--</span>): <input type='number' id='tempMin' value='0'></td>\n"
 "<td>Umidade Mínima (valor atual: <span id='actualhumMin'>--</span>): <input type='number' id='humMin' value='0'></td></tr>\n"
-"<tr><td style='border-right: 1px solid #333; padding: 6px;'>Temperatura Máxima (valor atual: <span id='actualtempMax'>--</span>): <input type='number' id='tempMax' value='50'></td>\n"
+"<tr><td class=\"celula\">Temperatura Máxima (valor atual: <span id='actualtempMax'>--</span>): <input type='number' id='tempMax' value='50'></td>\n"
 "<td>Umidade Máxima (valor atual: <span id='actualhumMax'>--</span>): <input type='number' id='humMax' value='100'></td></tr></table>\n"
 "<br><button onclick='sendConfig()'>Enviar Configuração</button>\n"
 "<div id=\"alerta\" style=\"color:red; font-weight:bold; margin-top:10px;\"></div>"
@@ -309,6 +313,9 @@ int main()
     gpio_pull_up(BOTAO_A);
     gpio_set_irq_enabled_with_callback(BOTAO_A, GPIO_IRQ_EDGE_FALL, true, &gpio_irq_handler);
 
+    gpio_init(LED_GREEN);
+    gpio_set_dir(LED_GREEN, GPIO_OUT);
+    gpio_put(LED_GREEN, 1); // Liga o LED verde inicialmente
     gpio_init(LED_RED);
     gpio_set_dir(LED_RED, GPIO_OUT);
     gpio_put(LED_RED, 0); // Desliga o LED vermelho inicialmente
@@ -395,7 +402,7 @@ int main()
     char str_press[5];  
     bool cor = true;
     bool wifi_connected = false;
-    uint8_t contador = 0;
+    uint8_t contador = 25;
 
     while (true)
     {
@@ -452,13 +459,13 @@ int main()
                 // Atualiza display com dados
                 ssd1306_fill(&ssd, !cor);                           
                 ssd1306_rect(&ssd, 3, 3, 122, 60, cor, !cor);       
-                ssd1306_line(&ssd, 3, 14, 123, 14, cor);            
-                ssd1306_line(&ssd, 3, 25, 123, 25, cor);           
-                ssd1306_line(&ssd, 3, 25, 123, 25, cor);           
-                ssd1306_line(&ssd, 3, 37, 123, 37, cor);           
-                ssd1306_draw_string(&ssd, ip_str, 10, 5);         
-                out_of_limits ? ssd1306_draw_string(&ssd, "ALERTA!!!", 30, 16) : ssd1306_draw_string(&ssd, "EMBARCATECH", 20, 16); 
-                out_of_limits ? ssd1306_draw_string(&ssd, "Limit excedido", 9, 28) : ssd1306_draw_string(&ssd, "Dados Sensores", 9, 28);
+                ssd1306_line(&ssd, 3, 14, 123, 14, cor);                              
+                ssd1306_line(&ssd, 3, 37, 123, 37, cor);                   
+                ssd1306_draw_string(&ssd, "EMBARCATECH", 20, 5); 
+                out_of_limits ?  ssd1306_draw_string(&ssd, "Limit excedido", 9, 28): ssd1306_draw_string(&ssd, "Dados Sensores", 9, 21);
+                if (out_of_limits){
+                    ssd1306_draw_string(&ssd, "ALERTA!!!", 30, 16);
+                }
                 ssd1306_line(&ssd, 63, 38, 63, 61, cor);            
                 ssd1306_draw_string(&ssd, str_press, 14, 41);            
                 ssd1306_draw_string(&ssd, str_alt, 14, 52);             
@@ -466,12 +473,13 @@ int main()
                 ssd1306_draw_string(&ssd, str_umi, 73, 52);            
                 ssd1306_send_data(&ssd); 
             } else {
-                // Modo 1: mostra IP e status Wi-Fi
+                // Modo 1: mostra IP
                 ssd1306_fill(&ssd, false);
-                ssd1306_draw_string(&ssd, "Info Wi-Fi", 0, 0);
-                ssd1306_draw_string(&ssd, "IP:", 0, 15);
-                ssd1306_draw_string(&ssd, ip_str, 30, 15);
-                wifi_connected ? ssd1306_draw_string(&ssd, "Wi-Fi: CONECTADO", 0, 30) : ssd1306_draw_string(&ssd, "Wi-Fi: DESCONECTADO", 0, 30);
+                ssd1306_rect(&ssd, 3, 3, 122, 60, cor, !cor);
+                ssd1306_line(&ssd, 3, 14, 123, 14, cor); 
+                ssd1306_line(&ssd, 3, 25, 123, 25, cor); 
+                ssd1306_draw_string(&ssd, "IP Wi-Fi", 32, 5);
+                ssd1306_draw_string(&ssd, ip_str, 10, 16);
                 ssd1306_send_data(&ssd);
             }           
         }
